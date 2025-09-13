@@ -2,9 +2,9 @@
 // Initialize a texture and load an image.
 // When the image finished loading copy it into the texture.
 //
-function loadTexture(gl, url) {
+function loadTexture(gl, url, format = gl.RGBA) {
   const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D, texture );
 
   // Because images have to be downloaded over the internet
   // they might take a moment until they are ready.
@@ -12,11 +12,11 @@ function loadTexture(gl, url) {
   // use it immediately. When the image has finished downloading
   // we'll update the texture with the contents of the image.
   const level = 0;
-  const internalFormat = gl.RGBA;
+  const internalFormat = format;
   const width = 1;
   const height = 1;
   const border = 0;
-  const srcFormat = gl.RGBA;
+  const srcFormat = format;
   const srcType = gl.UNSIGNED_BYTE;
   const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
   gl.texImage2D(

@@ -141,6 +141,12 @@ async function main() {
       ),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
       uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
+      uAlbedoMetal: gl.getUniformLocation(shaderProgram, "uAlbedoMetal"),
+      uNormalRoughness: gl.getUniformLocation(
+        shaderProgram,
+        "uNormalRoughness"
+      ),
+      uDepth: gl.getUniformLocation(shaderProgram, "uDepth"),
       uResolution: gl.getUniformLocation(shaderProgram, "uResolution"),
       uMouse: gl.getUniformLocation(shaderProgram, "uMouse"),
     },
@@ -150,17 +156,25 @@ async function main() {
 
   // Load texture
   const texture = loadTexture(gl, "texture/dt.jpg");
+  const albedoMetal = loadTexture(gl, "texture/DR_0_c_att_0.png", gl.RGBA8_UNORM);
+  const normalRoughness = loadTexture(gl, "texture/DR_0_c_att_1.png", gl.RGBA8_UNORM);
+  const depth = loadTexture(gl, "texture/DR_0_d_att.png", gl.R16UI);
+
+  
+
+
+
   // Flip image pixels into the bottom-to-top order that WebGL expects.
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
   // Draw the scene
-  drawScene(gl, programInfo, buffers, texture, pos);
+  drawScene(gl, programInfo, buffers, texture, albedoMetal, normalRoughness, depth, pos);
 
   function render() {
      resizeCanvasToDisplaySize(gl.canvas);
      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    drawScene(gl, programInfo, buffers, texture, pos);
+    drawScene(gl, programInfo, buffers, texture , albedoMetal, normalRoughness, depth, pos);
     requestAnimationFrame(render);
   }
 

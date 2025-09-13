@@ -1,5 +1,8 @@
 #version 300 es
 uniform sampler2D uSampler;
+uniform sampler2D uAlbedoMetal;
+uniform sampler2D uNormalRoughness;
+uniform sampler2D uDepth;
 uniform ivec2 uResolution;
 uniform ivec2 uMouse;
 
@@ -28,6 +31,8 @@ void main(void) {
     // get distance from the mouse
     highp vec2 mouse = vec2(uMouse) / vec2(uResolution);
     highp vec2 pos = gl_FragCoord.xy / vec2(uResolution);
+    
+
     mouse = mouse * 2.0 - 1.0; // convert to range [-1, 1]
     pos = pos * 2.0 - 1.0; // convert to range [-1, 1]
     pos.x *= float(uResolution.x) / float(uResolution.y);
@@ -70,5 +75,7 @@ void main(void) {
     }
     // color = vec3(1.0/t);
 
-    fragColor = vec4(color, 1); // red
+    highp vec4 test = textureLod(uDepth, gl_FragCoord.xy / vec2(uResolution), 0.0);
+
+    fragColor = vec4(test.rgb, 1); // red
 }
