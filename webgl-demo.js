@@ -153,7 +153,7 @@ async function main() {
 
   // Load texture
   const texture = loadTexture(gl, "texture/dt.jpg");
-  const albedoMetal = loadTexture(gl, "texture/DR_0_c_att_0.png", gl.RGBA8_UNORM);
+  const albedoMetal = loadTexture(gl, "texture/DR_0_c_att_0.webp", gl.RGBA8_UNORM);
   const normalRoughness = loadTexture(gl, "texture/DR_0_c_att_1.png", gl.RGBA8_UNORM);
   const depth = loadTexture16(gl, "texture/DR_0_d_att.png");
 

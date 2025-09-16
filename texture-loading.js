@@ -19,7 +19,7 @@ function loadTexture(gl, url, format = gl.RGBA) {
   const srcFormat = format;
   const srcType = gl.UNSIGNED_BYTE;
   const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
-
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); 
   gl.texImage2D(
     gl.TEXTURE_2D,
     level,
@@ -35,6 +35,7 @@ function loadTexture(gl, url, format = gl.RGBA) {
   const image = new Image();
   image.onload = () => {
     gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); 
     gl.texImage2D(
       gl.TEXTURE_2D,
       level,

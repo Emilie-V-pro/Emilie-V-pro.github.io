@@ -55,12 +55,39 @@ vec3 reconstructWorldPos(vec2 fragCoord, float depth, mat4 projection, mat4 view
 }
 
 
+vec2 getCroppedUV(vec2 uv, float screenRatio, float minCenterStart, float minCenterEnd)
+{
+    vec2 newUV = uv;
+
+    // Taille du centre minimal
+    float minCenterSizeX = minCenterEnd - minCenterStart;
+    float minCenterSizeY = minCenterEnd - minCenterStart;
+
+    // Échelle minimale pour garantir que ce rectangle est visible
+    float minScaleX = 1.0 / minCenterSizeX; // ex: 1 / 0.5 = 2.0
+    float minScaleY = 1.0 / minCenterSizeY;
+
+    if (screenRatio > 1.0) {
+        // crop en X
+        float scale = max(screenRatio / 1.0, minScaleX);
+        newUV.x = (uv.x - 0.5) * scale + 0.5;
+    } else {
+        // crop en Y
+        float scale = max(1.0 / screenRatio, minScaleY);
+        newUV.y = (uv.y - 0.5) * scale + 0.5;
+    }
+
+    return newUV;
+}
+
 void main(void) {
+   highp vec2 mouse = vec2(uMouse) / vec2(uResolution);
+    highp vec2 pos = gl_FragCoord.xy / vec2(uResolution);
+  {
     highp vec3 color = vec3(0.0);
 
     // get distance from the mouse
-    highp vec2 mouse = vec2(uMouse) / vec2(uResolution);
-    highp vec2 pos = gl_FragCoord.xy / vec2(uResolution);
+   
     
 
     mouse = mouse * 2.0 - 1.0; // convert to range [-1, 1]
@@ -103,18 +130,15 @@ void main(void) {
         // otherwise use the texture
         color = vec3(0.0f);
     }
-
-
-
-
-
-
-
-
+}
 
     // color = vec3(1.0/t);
-    vec2 uv = gl_FragCoord.xy / vec2(uResolution);
-    uv = vec2(uv.x, 1.-uv.y);
+    vec2 uv = ((gl_FragCoord.xy + 0.5) / vec2(uResolution) );
+    uv = vec2(uv.x, 1.0 - uv.y);
+
+    uv = getCroppedUV(uv, float(uResolution.x)/float(uResolution.y), 0.25, 0.75);
+
+    // uv = getCroppedUV(uv, float(uResolution.x) / float(uResolution.y));
     vec4 albedo_metalic = texture(uAlbedoMetal, uv);
     vec4 normal_roughness = texture(uNormalRoughness, uv);
      float depth = float(texture(uDepth, uv).r) / 65535.0;
@@ -135,7 +159,7 @@ void main(void) {
     vec3 test = normalize((normalize(normal) - 0.5f) * 2.f);
     vec3 outColor = clamp(dot(test, normalize(lightPOS - wpos)), 0., 1.) * albedo * (1./(distance(lightPOS, wpos) * distance(lightPOS, wpos))) * 1000.;
    if(depth != 1.f)
-        fragColor = vec4(outColor,1);
+        fragColor = vec4(albedo_metalic.rgb,1);
     else 
          fragColor = vec4(albedo,1);
 }
