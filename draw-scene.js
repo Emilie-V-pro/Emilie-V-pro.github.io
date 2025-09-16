@@ -23,24 +23,37 @@ function drawScene(
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const zNear = 0.1;
   const zFar = 100.0;
-  const projectionMatrix = mat4.create();
+  const modelViewMatrix = new Float32Array([
+    0.443242759, -0.357313663, 0.822108746, 0, 
+    0, 0.917120993, 0.398608923, 0, 
+    -0.896401584, -0.17668052, 0.406507254, 0, 
+    -8.59910965, -38.2452278, -52.0798187, 1
+  ]);
+
+  // console.log(projectionMatrix);
 
   // note: glMatrix always has the first argument
   // as the destination to receive the result.
-  mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+  // mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
-  const modelViewMatrix = mat4.create();
+  const projectionMatrix = new Float32Array([
+    0.670361459, 0, 0, 0, 
+    0, 1.19175363, 0, 0, 
+    0, 0, -1.00002003, -1, 
+    0, 0, -0.0200002007, 0
+
+  ]);
 
 
 
   // Now move the drawing position a bit to where we want to
   // start drawing the square.
-  mat4.translate(
-      modelViewMatrix,  // destination matrix
-      modelViewMatrix,  // matrix to translate
-      [0, 0, -6.0]);    // amount to translate
+  // mat4.translate(
+  //     modelViewMatrix,  // destination matrix
+  //     modelViewMatrix,  // matrix to translate
+  //     [0, 0, -6.0]);    // amount to translate
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute.
@@ -52,9 +65,10 @@ function drawScene(
 
   // Set the shader uniforms
   gl.uniformMatrix4fv(
-      programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
+      programInfo.uniformLocations.projMatrix, false, projectionMatrix);
+  
   gl.uniformMatrix4fv(
-      programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
+      programInfo.uniformLocations.viewMavtrix, false, modelViewMatrix);
 
   gl.uniform2i(
       programInfo.uniformLocations.uMouse, mouseInfo.x,

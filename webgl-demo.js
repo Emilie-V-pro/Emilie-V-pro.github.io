@@ -1,6 +1,6 @@
 import { initBuffers } from "./init-buffer.js";
 import { drawScene } from "./draw-scene.js";
-import { loadTexture } from "./texture-loading.js";
+import { loadTexture, loadTexture16 } from "./texture-loading.js";
 let pos = { x: 0, y: 0 };
 main();
 
@@ -135,11 +135,8 @@ async function main() {
       vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
     },
     uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(
-        shaderProgram,
-        "uProjectionMatrix"
-      ),
-      modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
+      viewMavtrix: gl.getUniformLocation(shaderProgram, "uViewMatrix"),
+      projMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),
       uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
       uAlbedoMetal: gl.getUniformLocation(shaderProgram, "uAlbedoMetal"),
       uNormalRoughness: gl.getUniformLocation(
@@ -158,7 +155,7 @@ async function main() {
   const texture = loadTexture(gl, "texture/dt.jpg");
   const albedoMetal = loadTexture(gl, "texture/DR_0_c_att_0.png", gl.RGBA8_UNORM);
   const normalRoughness = loadTexture(gl, "texture/DR_0_c_att_1.png", gl.RGBA8_UNORM);
-  const depth = loadTexture(gl, "texture/DR_0_d_att.png", gl.R16UI);
+  const depth = loadTexture16(gl, "texture/DR_0_d_att.png");
 
   
 

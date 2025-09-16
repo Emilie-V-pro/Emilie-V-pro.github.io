@@ -1,10 +1,17 @@
 #version 300 es
+
+precision highp float;
+precision highp usampler2D;
 uniform sampler2D uSampler;
 uniform sampler2D uAlbedoMetal;
 uniform sampler2D uNormalRoughness;
-uniform sampler2D uDepth;
+uniform usampler2D uDepth;
 uniform ivec2 uResolution;
 uniform ivec2 uMouse;
+
+
+uniform mat4 uViewMatrix;
+uniform mat4 uProjectionMatrix;
 
 out highp vec4 fragColor;
 
@@ -24,6 +31,29 @@ highp float plaIntersect(in highp vec3 ro, in highp vec3 rd, in highp vec3 p, in
 {
     return dot(normal, (ro - p)) / dot(normal, rd);
 }
+
+vec3 reconstructWorldPos(vec2 fragCoord, float depth, mat4 projection, mat4 view) {
+    // 0..1 → -1..1
+    vec2 ndc;
+    ndc.x = fragCoord.x * 2.0 - 1.0;
+    ndc.y = fragCoord.y * 2.0 - 1.0;
+    ndc.y *= -1.0; // Invert Y for Vulkan
+
+    float z_ndc = depth;
+
+    // Position en clip space
+    vec4 clip = vec4(ndc, z_ndc, 1.0);
+
+    // Inverse VP
+    mat4 invVP = inverse(projection * view );
+
+    // Homogeneous → World
+    vec4 world = invVP * clip;
+    world /= world.w;
+
+    return world.xyz;
+}
+
 
 void main(void) {
     highp vec3 color = vec3(0.0);
@@ -73,9 +103,39 @@ void main(void) {
         // otherwise use the texture
         color = vec3(0.0f);
     }
+
+
+
+
+
+
+
+
+
     // color = vec3(1.0/t);
+    vec2 uv = gl_FragCoord.xy / vec2(uResolution);
+    uv = vec2(uv.x, 1.-uv.y);
+    vec4 albedo_metalic = texture(uAlbedoMetal, uv);
+    vec4 normal_roughness = texture(uNormalRoughness, uv);
+     float depth = float(texture(uDepth, uv).r) / 65535.0;
+    
+    vec2 ndc;
+    ndc.x = uv.x * 2.0 - 1.0;
+    ndc.y = uv.y * 2.0 - 1.0;
+    ndc.y *= -1.0; // Invert Y for Vulkan
+    vec4 clip = vec4(ndc, depth, 1.0);
 
-    highp vec4 test = textureLod(uDepth, gl_FragCoord.xy / vec2(uResolution), 0.0);
 
-    fragColor = vec4(test.rgb, 1); // red
+    vec3 wpos = reconstructWorldPos(uv, depth, uProjectionMatrix, uViewMatrix);
+    
+    vec3 lightPOS = vec3(-13,3, mix(-25., 25., mouse.x));
+    
+    vec3 albedo = albedo_metalic.rgb;
+    vec3 normal = normal_roughness.rgb ; //- 0.5) * 2.;
+    vec3 test = normalize((normalize(normal) - 0.5f) * 2.f);
+    vec3 outColor = clamp(dot(test, normalize(lightPOS - wpos)), 0., 1.) * albedo * (1./(distance(lightPOS, wpos) * distance(lightPOS, wpos))) * 1000.;
+   if(depth != 1.f)
+        fragColor = vec4(outColor,1);
+    else 
+         fragColor = vec4(albedo,1);
 }
