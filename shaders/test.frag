@@ -9,7 +9,6 @@ uniform usampler2D uDepth;
 uniform ivec2 uResolution;
 uniform ivec2 uMouse;
 
-
 uniform mat4 uViewMatrix;
 uniform mat4 uProjectionMatrix;
 
@@ -24,6 +23,40 @@ highp float sphIntersect(highp vec3 ro, highp vec3 rd, highp vec4 sph) {
         return -1.0;
     h = sqrt(h);
     return -b - h;
+}
+
+struct Ray {
+    vec3 ro;
+    vec3 rd;
+};
+
+const float M_PI = 3.1415926538;
+
+Ray createRay(in vec2 uv, in ivec2 res) {
+    // convert pixel to NDS
+    vec2 pxNDS = uv * 2. - 1.;
+    pxNDS = vec2(pxNDS.x * (float(res.x) / float(res.y)), pxNDS.y);
+
+    // choose an arbitrary HitPoint in the viewing volume
+    // z = -1 equals a HitPoint on the near plane, i.e. the screen
+    vec3 HitPointNDS = vec3(pxNDS, 0.1);
+
+    // as this is in homogenous space, add the last homogenous coordinate
+    vec4 HitPointNDSH = vec4(HitPointNDS, 1.0);
+    // transform by inverse projection to get the HitPoint in view space
+    vec4 dirEye = inverse(uProjectionMatrix) * HitPointNDSH;
+
+    // since the camera is at the origin in view space by definition,
+    // the current HitPoint is already the correct direction
+    // (dir(0,P) = P - 0 = P as a direction, an infinite HitPoint,
+    // the homogenous component becomes 0 the scaling done by the
+    // w-division is not of interest, as the direction in xyz will
+    // stay the same and we can just normalize it later
+    dirEye.w = 0.;
+    vec3 ro = inverse(uViewMatrix)[3].xyz;
+    // compute world ray direction by multiplying the inverse view matrix
+    vec3 rd = normalize((inverse(uViewMatrix) * dirEye).xyz);
+    return Ray(ro, rd);
 }
 
 // plane degined by p (p.xyz must be normalized)
@@ -45,7 +78,7 @@ vec3 reconstructWorldPos(vec2 fragCoord, float depth, mat4 projection, mat4 view
     vec4 clip = vec4(ndc, z_ndc, 1.0);
 
     // Inverse VP
-    mat4 invVP = inverse(projection * view );
+    mat4 invVP = inverse(projection * view);
 
     // Homogeneous → World
     vec4 world = invVP * clip;
@@ -54,112 +87,156 @@ vec3 reconstructWorldPos(vec2 fragCoord, float depth, mat4 projection, mat4 view
     return world.xyz;
 }
 
-
 vec2 getCroppedUV(vec2 uv, float screenRatio, float minCenterStart, float minCenterEnd)
 {
-    vec2 newUV = uv;
+    uv = (uv - 0.5) * 2.;
+    uv *= (minCenterEnd - minCenterStart);
+    if (screenRatio > 1.)
+        uv.x *= screenRatio;
+    else
+        uv.y /= screenRatio;
+    return uv * 0.5 + 0.5;
+}
 
-    // Taille du centre minimal
-    float minCenterSizeX = minCenterEnd - minCenterStart;
-    float minCenterSizeY = minCenterEnd - minCenterStart;
 
-    // Échelle minimale pour garantir que ce rectangle est visible
-    float minScaleX = 1.0 / minCenterSizeX; // ex: 1 / 0.5 = 2.0
-    float minScaleY = 1.0 / minCenterSizeY;
 
-    if (screenRatio > 1.0) {
-        // crop en X
-        float scale = max(screenRatio / 1.0, minScaleX);
-        newUV.x = (uv.x - 0.5) * scale + 0.5;
-    } else {
-        // crop en Y
-        float scale = max(1.0 / screenRatio, minScaleY);
-        newUV.y = (uv.y - 0.5) * scale + 0.5;
-    }
 
-    return newUV;
+float dotClamp(vec3 v1, vec3 v2) {
+    return clamp(dot(v1, v2), 0.0, 1.0);
+}
+
+//////////////////////////////////////////////////////////////////////////
+// BRDF from LearnOpenGL
+//////////////////////////////////////////////////////////////////////////
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0) {
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+float DistributionGGX(vec3 N, vec3 H, float roughness) {
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+
+    float num = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = M_PI * denom * denom;
+
+    return num / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness) {
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+
+    float num = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+
+    return num / denom;
+}
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+    return ggx1 * ggx2;
+}
+
+vec3 LearnOpenGLBRDF(vec3 albedo, vec2 metal_roughnss, vec3 N, vec3 V, vec3 L, vec3 lightColor) {
+    vec3 F0 = vec3(0.04);
+    F0 = mix(F0, albedo, metal_roughnss.r);
+    vec3 H = normalize(V + L);
+
+    float NDF = DistributionGGX(N, H, metal_roughnss.g);
+    float G = GeometrySmith(N, V, L, metal_roughnss.g);
+    vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metal_roughnss.r;
+
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    vec3 specular = numerator / denominator;
+
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(N, L), 0.0);
+
+    return (kD * albedo / M_PI + specular) * lightColor * NdotL;
+}
+
+
+
+vec4 fromLinear(vec4 linearRGB) {
+    bvec3 cutoff = lessThan(linearRGB.rgb, vec3(0.0031308));
+    vec3 higher = vec3(1.055) * pow(linearRGB.rgb, vec3(1.0 / 2.4)) - vec3(0.055);
+    vec3 lower = linearRGB.rgb * vec3(12.92);
+
+    return vec4(mix(higher, lower, cutoff), linearRGB.a);
 }
 
 void main(void) {
-   highp vec2 mouse = vec2(uMouse) / vec2(uResolution);
+    highp vec2 mouse = vec2(uMouse) / vec2(uResolution);
     highp vec2 pos = gl_FragCoord.xy / vec2(uResolution);
-  {
-    highp vec3 color = vec3(0.0);
-
-    // get distance from the mouse
-   
-    
-
-    mouse = mouse * 2.0 - 1.0; // convert to range [-1, 1]
-    pos = pos * 2.0 - 1.0; // convert to range [-1, 1]
-    pos.x *= float(uResolution.x) / float(uResolution.y);
-    mouse.x *= float(uResolution.x) / float(uResolution.y);
-
-    highp vec3 ro = vec3(0.0, 0.0, 0.0); // ray origin
-    highp vec3 rd = normalize(vec3(pos, 1)); // ray
-
-    highp vec4 sph = vec4(0.0, 0.0, 6.0, 1); // sphere at origin with radius 0.1
-    highp float t = sphIntersect(ro, rd, sph);
-    highp vec3 hit_pos = rd * t; // move to the intersection point
-    highp vec3 hit_normal = normalize(hit_pos - sph.xyz);
-
-    highp vec3 plane = vec3(0.0, 1.0, 0.0); // plane at z = 2
-
-    highp float temp = plaIntersect(ro, rd, plane, vec3(0.0, 1.0, 0.0));
-    if (temp > 0.0 && (t < 0.0 || temp < t)) {
-        t = temp;
-        hit_pos = rd * t; // move to the intersection point
-        hit_normal = plane.xyz; // plane normal
-    }
-    // t = temp;
-
-    highp float dist = length(pos - mouse);
-    // if the distance is less than 0.1 then color it red
-    if (t > 0.0) {
-        highp vec3 mouse_plane = vec3(0.0, 0.0, -4.0); // plane at z = 2
-        highp vec3 mouse_plane_normal = vec3(0.0, 0.0, -1.0); // plane normal
-
-        highp float mouse_t = plaIntersect(ro, normalize(vec3(mouse, 1)), mouse_plane, mouse_plane_normal);
-
-        highp vec3 mouse_world = ro + normalize(vec3(mouse, 1)) * mouse_t;
-
-        highp float dot = max(dot(hit_normal, normalize(mouse_world - hit_pos)), 0.0);
-        color = vec3(dot) * (1.0 / pow(distance(mouse_world, hit_pos), 2.0)); // red
-        // color = mouse_world;
-    } else {
-        // otherwise use the texture
-        color = vec3(0.0f);
-    }
-}
+ 
 
     // color = vec3(1.0/t);
-    vec2 uv = ((gl_FragCoord.xy + 0.5) / vec2(uResolution) );
-    uv = vec2(uv.x, 1.0 - uv.y);
+    vec2 uv = ((gl_FragCoord.xy + 0.5) / vec2(uResolution));
+    vec2 mouseUV = (vec2(uMouse) + 0.5) / vec2(uResolution);
+    // Ray r = createRay(uv, uResolution);
 
-    uv = getCroppedUV(uv, float(uResolution.x)/float(uResolution.y), 0.25, 0.75);
+
+
+
+    
+    
+    
+    uv = vec2(uv.x, 1.0 - uv.y);
+    mouseUV = vec2(mouseUV.x, 1.0 - mouseUV.y);
+
+    uv = getCroppedUV(uv, float(uResolution.x) / float(uResolution.y), 0.25, 0.75);
+    mouseUV = getCroppedUV(mouseUV, float(uResolution.x) / float(uResolution.y), 0.25, 0.75);
+
 
     // uv = getCroppedUV(uv, float(uResolution.x) / float(uResolution.y));
     vec4 albedo_metalic = texture(uAlbedoMetal, uv);
     vec4 normal_roughness = texture(uNormalRoughness, uv);
-     float depth = float(texture(uDepth, uv).r) / 65535.0;
-    
-    vec2 ndc;
-    ndc.x = uv.x * 2.0 - 1.0;
-    ndc.y = uv.y * 2.0 - 1.0;
-    ndc.y *= -1.0; // Invert Y for Vulkan
-    vec4 clip = vec4(ndc, depth, 1.0);
-
+    float depth = float(texture(uDepth, uv).r) / 65535.0;
 
     vec3 wpos = reconstructWorldPos(uv, depth, uProjectionMatrix, uViewMatrix);
     
-    vec3 lightPOS = vec3(-13,3, mix(-25., 25., mouse.x));
     
+    
+    float depthMouse = float(texture(uDepth, mouseUV).r) / 65535.0;
+    vec3 wposMouse = reconstructWorldPos(mouseUV, depthMouse, uProjectionMatrix, uViewMatrix);
+    vec3 normalMouse = texture(uNormalRoughness, mouseUV).rgb;
+    Ray r;
+    r.ro = inverse(uViewMatrix)[3].xyz;
+    r.rd = normalize(wpos - r.ro);
+
+    
+
+    float d = plaIntersect(r.ro, r.rd, vec3(-6, 3, 0), normalize(vec3(1, 0, 0)));
+    vec3 lightPOS = wposMouse + ((normalMouse -0.5) * 2.) * 0.2;
+    // lightPOS = vec3(1. , mix(0., 2., mouseUV.y), mix(-2., 2., mouseUV.x));
+
     vec3 albedo = albedo_metalic.rgb;
-    vec3 normal = normal_roughness.rgb ; //- 0.5) * 2.;
-    vec3 test = normalize((normalize(normal) - 0.5f) * 2.f);
-    vec3 outColor = clamp(dot(test, normalize(lightPOS - wpos)), 0., 1.) * albedo * (1./(distance(lightPOS, wpos) * distance(lightPOS, wpos))) * 1000.;
-   if(depth != 1.f)
-        fragColor = vec4(albedo_metalic.rgb,1);
-    else 
-         fragColor = vec4(albedo,1);
+    vec3 normal = normalize((normal_roughness.rgb - 0.5) * 2.);
+
+    vec2 metalRoughness = vec2(albedo_metalic.a, normal_roughness.a);
+   
+
+    vec3 outColor = LearnOpenGLBRDF(albedo, vec2(metalRoughness), normal, -r.rd, normalize(lightPOS - wpos), (vec3(1,1,1) * 10.) * (1./distance(lightPOS, wpos)));
+    
+    float dist_to_w = distance(wpos, r.ro); 
+    
+    if (true) {
+   
+
+        fragColor = vec4(outColor, 1);
+    }
+    else
+        fragColor = vec4(albedo, 1);
 }

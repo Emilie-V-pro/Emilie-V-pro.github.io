@@ -71,8 +71,8 @@ function drawScene(
       programInfo.uniformLocations.viewMavtrix, false, modelViewMatrix);
 
   gl.uniform2i(
-      programInfo.uniformLocations.uMouse, mouseInfo.x,
-      gl.canvas.clientHeight - mouseInfo.y);
+      programInfo.uniformLocations.uMouse, mouseInfo.x + 16,
+      gl.canvas.clientHeight - mouseInfo.y - 16);
   gl.uniform2i(
       programInfo.uniformLocations.uResolution, gl.canvas.clientWidth,
       gl.canvas.clientHeight);
