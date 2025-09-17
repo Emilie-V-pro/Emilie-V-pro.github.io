@@ -70,9 +70,10 @@ function drawScene(
   gl.uniformMatrix4fv(
       programInfo.uniformLocations.viewMavtrix, false, modelViewMatrix);
 
+    
   gl.uniform2i(
-      programInfo.uniformLocations.uMouse, mouseInfo.x + 16,
-      gl.canvas.clientHeight - mouseInfo.y - 16);
+      programInfo.uniformLocations.uMouse, mouseInfo.x,
+      gl.canvas.clientHeight - mouseInfo.y);
   gl.uniform2i(
       programInfo.uniformLocations.uResolution, gl.canvas.clientWidth,
       gl.canvas.clientHeight);
