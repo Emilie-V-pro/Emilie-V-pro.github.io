@@ -7,8 +7,8 @@ uniform sampler2D uAlbedoMetal;
 uniform sampler2D uNormalRoughness;
 uniform usampler2D uDepth;
 uniform ivec2 uResolution;
-uniform ivec2 uMouse;
-
+// uniform ivec2 uMouse;
+uniform vec3 uLightPos;
 uniform mat4 uViewMatrix;
 uniform mat4 uProjectionMatrix;
 
@@ -35,7 +35,7 @@ const float M_PI = 3.1415926538;
 Ray createRay(in vec2 uv, in ivec2 res) {
   // convert pixel to NDS
   vec2 pxNDS = uv * 2. - 1.;
-  pxNDS = vec2(pxNDS.x * (float(res.x) / float(res.y)), pxNDS.y);
+  pxNDS = vec2(pxNDS.x , pxNDS.y);
 
   // choose an arbitrary HitPoint in the viewing volume
   // z = -1 equals a HitPoint on the near plane, i.e. the screen
@@ -178,21 +178,21 @@ const vec2 uv_offsets[5] =
 
 void main(void) {
   float ratio = float(uResolution.x) / float(uResolution.y);
-  vec2 mouseUV = (vec2(uMouse) + 0.5) / vec2(uResolution);
-  mouseUV = vec2(mouseUV.x, 1.0 - mouseUV.y);
-  mouseUV = getCroppedUV(mouseUV, ratio, 0.25, 0.75);
-  float depthMouse = float(texture(uDepth, mouseUV).r) / 65535.0;
+  // vec2 mouseUV = (vec2(uMouse) + 0.5) / vec2(uResolution);
+  
+  // mouseUV = vec2(mouseUV.x, 1.0 - mouseUV.y);
+  // mouseUV = getCroppedUV(mouseUV, ratio, 0.25, 0.75);
+  // float depthMouse = float(texture(uDepth, mouseUV).r) / 65535.0;
 
-  vec3 wposMouse =
-      reconstructWorldPos(mouseUV, depthMouse, uProjectionMatrix, uViewMatrix);
-  vec3 normalMouse = texture(uNormalRoughness, mouseUV).rgb;
+  // vec3 wposMouse =
+      // reconstructWorldPos(mouseUV, depthMouse, uProjectionMatrix, uViewMatrix);
+  // Ray r = createRay(mouseUV, uResolution);
+  // Ray r;
+  // r.ro = inverse(uViewMatrix)[3].xyz;
+  // r.rd = normalize(wposMouse - r.ro);
 
-  Ray r;
-  r.ro = inverse(uViewMatrix)[3].xyz;
-  r.rd = normalize(wposMouse - r.ro);
-
-  float d = plaIntersect(r.ro, r.rd, vec3(-6.5, 2, 0), normalize(vec3(1, 0, 0)));
-  vec3 lightPOS = r.ro + r.rd* d;
+  // float d = plaIntersect(r.ro, r.rd, vec3(-6.5, 2, 0), normalize(vec3(1, 0, 0)));
+  vec3 lightPOS = uLightPos;
   vec3 outColor = vec3(0);
 
   for (int i = 0; i < 5; i++) {
@@ -214,8 +214,8 @@ void main(void) {
     
 
     outColor += LearnOpenGLBRDF(
-        albedo, vec2(metalRoughness), normal, -r.rd, normalize(lightPOS - wpos),
-        (vec3(1, 1, 1) * 10.) * (1. / distance(lightPOS, wpos)));
+        albedo, vec2(metalRoughness), normal, normalize(inverse(uViewMatrix)[3].xyz-wpos), normalize(lightPOS - wpos),
+        (vec3(1, 1, 1) * 2.) * (1. / (distance(lightPOS, wpos)* distance(lightPOS, wpos))));
   }
   outColor /= 5.;
 
@@ -227,5 +227,5 @@ void main(void) {
 
   // float dist_to_w = distance(wpos, r.ro);
 
-  fragColor = vec4(outColor, 1);
+  fragColor = fromLinear(vec4(outColor, 1));
 }

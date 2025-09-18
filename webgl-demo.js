@@ -72,7 +72,6 @@ async function getShaderSource(id) {
 function getMousePos(e) {
   const canvas = document.querySelector("#gl-canvas");
   var rect = canvas.getBoundingClientRect();
-  console.log(rect)
   //this gets your canvas size.
   return {
     x: Math.round(e.clientX - rect.left),
@@ -132,7 +131,7 @@ async function main() {
   }
   canvas.addEventListener;
   // Initialize the GL context
-  const gl = canvas.getContext("webgl2");
+  const gl = canvas.getContext("webgl2", { antialias: true });
 
   // Only continue if WebGL is available and working
   if (gl === null) {
@@ -167,7 +166,7 @@ async function main() {
       ),
       uDepth: gl.getUniformLocation(shaderProgram, "uDepth"),
       uResolution: gl.getUniformLocation(shaderProgram, "uResolution"),
-      uMouse: gl.getUniformLocation(shaderProgram, "uMouse"),
+      uLightPos: gl.getUniformLocation(shaderProgram, "uLightPos"),
     },
   };
 
@@ -209,15 +208,7 @@ async function main() {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     
 
-    if (isMobile()) {
-      let time = performance.now() /1000;
-      let box = canvas.getBoundingClientRect()
-      pos =  {
-        x : (Math.sin(time) +1 )* box.width  * 0.5 ,
-        y : 1
-      }
-      
-    } 
+    
     drawScene(
       gl,
       programInfo,
