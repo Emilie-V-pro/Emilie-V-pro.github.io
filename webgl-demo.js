@@ -70,7 +70,7 @@ async function getShaderSource(id) {
 }
 
 function getMousePos(e) {
-  const canvas = document.querySelector("#gl-canvas");
+  const canvas = document.querySelector("#container");
   var rect = canvas.getBoundingClientRect();
   //this gets your canvas size.
   return {
@@ -124,10 +124,11 @@ async function main() {
       return regex.test(navigator.userAgent);
     }
   const canvas = document.querySelector("#gl-canvas");
+  canvas.style.display = 'none';
   canvas.width = canvas.clientWidth;
   canvas.height = canvas.clientHeight;
   if (!isMobile()) {
-  canvas.addEventListener("mousemove", mousePos);
+    document.querySelector("#container").addEventListener("mousemove", mousePos);
   }
   canvas.addEventListener;
   // Initialize the GL context

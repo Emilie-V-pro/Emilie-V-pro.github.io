@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -6,7 +7,88 @@ html, body {
 }
 
 canvas {
-  display: block; /* évite les marges indésirables */
+  display: block;
+  /* évite les marges indésirables */
   width: 100%;
   height: 100%;
+   z-index: 0;
+}
+
+html {
+  cursor: url("texture/bulb.svg")8 8, auto;
+}
+
+body {
+  
+}
+
+
+/* HTML: <div class="loader"></div> */
+#loader {
+  height: 8px;
+  width: 230px;
+  --c: no-repeat linear-gradient(#63acff 0 0);
+  background: var(--c), var(--c), #1fd6f7;
+  background-size: 60% 100%;
+  z-index: 2;
+  animation: l16 3s infinite;
+}
+
+
+#loader-background{
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  z-index: 1;  /* Au-dessus du canvas */
+  background: rgba(0,0,0,0.1);
+  backdrop-filter: blur(5px);            /* floute ce qui est derrière */
+  -webkit-backdrop-filter: blur(5px);  
+
+  transition: background-color 3s ease, opacity 3s ease, filter 3s ease;
+}
+
+#loader-background.loading {
+  transition-delay: 250ms;
+  background: rgba(0,0,0,1);
+              /* canvas partiellement visible */
+  filter: blur(5px);    
+  -webkit-backdrop-filter: blur(5px);  
+       /* flou */
+}
+
+#loader-background.ready {
+  transition-delay: 250ms;
+  background: rgba(0,0,0,0.1);
+  opacity: 0;                   /* totalement visible */
+  filter: blur(0px);  
+  -webkit-backdrop-filter: blur(0px);  
+          /* net */
+}
+
+
+#container {
+  display: flex;
+  background-color: black;
+  justify-content: center;
+  align-items: center;
+  
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes l16 {
+  0% {
+    background-position: -150% 0, -150% 0
+  }
+
+  66% {
+    background-position: 250% 0, -150% 0
+  }
+
+  100% {
+    background-position: 250% 0, 250% 0
+  }
 }
