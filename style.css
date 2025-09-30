@@ -361,7 +361,7 @@ body {
   height: 120px;
   object-fit: cover;
   border-radius: 50%;
-  border: 3px solid #ddd;
+  border: 3px solid #1fd6f7;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s;
 }

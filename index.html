@@ -1,69 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8"/>
-    <title>Émilie Vernay</title>
-    <link rel="stylesheet" type="text/css" href="style.css" />
-    <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
-    <script src="https://unpkg.com/upng-js@2.1.0/UPNG.js"></script>
-    <script src="init-buffer.js" type="module"></script>
-    <script defer src="scroll.js"></script>
 
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
-      integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
-      crossorigin="anonymous"
-      defer
-    ></script>
+<head>
+  <meta charset="utf-8" />
+  <title>Émilie Vernay</title>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
+  <script src="https://unpkg.com/upng-js@2.1.0/UPNG.js"></script>
+  <script src="init-buffer.js" type="module"></script>
+  <script defer src="scroll.js"></script>
 
-    <script defer src="webgl-demo.js" type="module"></script>
-  </head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
+    integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
+    crossorigin="anonymous" defer></script>
 
-  <body>
-    <div id="navbar-container">
-      <nav class="navbar">
-        <a class="logo"
-          >Émilie Vernay |&nbsp;<span class="typewriter"></span
-        ></a>
-        <ul>
-          <li><a href="#">Home</a></li>
-          <li><a href="#">Projects</a></li>
-          <li><a href="#">Resume</a></li>
-          <li><a href="#">Contact</a></li>
-        </ul>
-      </nav>
+  <script defer src="webgl-demo.js" type="module"></script>
+</head>
 
-      <div class="progress-container">
-        <div class="progress-bar" id="myBar"></div>
-      </div>
+<body>
+  <div id="navbar-container">
+    <nav class="navbar">
+      <a class="logo">Émilie Vernay |&nbsp;<span class="typewriter"></span></a>
+      <ul>
+        <li><a href="#">Home</a></li>
+        <li><a href="#Project">Projects</a></li>
+        <li><a href="#">Resume</a></li>
+        <li><a href="#main-footer">Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="myBar"></div>
     </div>
-    <div id="container">
-      <div id="loader"></div>
-      <div id="loader-background" class="loading"></div>
-      <canvas id="gl-canvas"></canvas>
+  </div>
+  <div id="container">
+    <div id="loader"></div>
+    <div id="loader-background" class="loading"></div>
+    <canvas id="gl-canvas"></canvas>
+  </div>
+
+  <div id="about-me">
+    <div><img src="texture/pp.webp"></img>
+      <h1>About Me</h1>
     </div>
+    <p>
+      Hello! I'm Émilie, a computer science student who loves graphics
+      programming and low level GPU API.
+    </p>
+    <p>
+      I started learning image synthesys with Vulkan in 2023 and I have been
+      working with it on some projects for university.
+    </p>
+    <p>
+      Then I developped a reusable Vulkan engine/framework in C++ to make different applications for my university
+      courses.
+    </p>
+  </div>
 
-    <div id="about-me">
-      <div><img src="texture/pp.webp"></img><h1>About Me</h1></div>
-      <p>
-        Hello! I'm Émilie, a computer science student who loves graphics
-        programming and low level GPU API.
-      </p>
-      <p>
-        I started learning image synthesys with Vulkan in 2023 and I have been
-        working with it on some projects for university.
-      </p>
-      <p>
-        Then I developped a reusable Vulkan engine/framework in C++ to make different applications for my university courses.
-      </p>
+
+
+  <!-- <h1 id="Project">----Project----</h1>
+  <div>
+    <h2>TT Engine</h2>
+    <p> </p>
+  </div>
+
+  <div>
+    <h2>Physics based animation</h2>
+    <img></div>
+    <p> </p>
+  </div>
+
+  <div>
+    <h2>Water simulation</h2>
+    <p> </p>
+  </div>
+
+
+  <div>
+    <h2>Laplacian Computation</h2>
+    <p> </p>
+  </div>
+
+  <div>
+    <h2>Delauney triangulation</h2>
+    <p> </p>
+  </div>
+
+    <div>
+    <h2>Hardware Ray tracing</h2>
+    <p> </p>
+  </div> -->
+
+
+  <footer id="main-footer">
+    <div class="footer-content">
+      <a href="https://github.com/Emilie-V-pro" target="_blank" aria-label="GitHub"> <i class="fab fa-github"></i> </a>
+      <a href="https://www.linkedin.com/in/%C3%A9milie-vernay-65350a222/" target="_blank" aria-label="LinkedIn"> <i
+          class="fab fa-linkedin"></i> </a>
+      <a href="mailto:emilie.vernay.pro@gmail.com" aria-label="Email"> <i class="fas fa-envelope"></i> </a>
     </div>
+  </footer> <!-- N'oublie pas d'inclure Font Awesome dans ton <head> -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</body>
 
-
-    <footer id="main-footer"> 
-      <div class="footer-content"> 
-        <a href="https://github.com/Emilie-V-pro" target="_blank" aria-label="GitHub"> <i class="fab fa-github"></i> </a> 
-        <a href="https://www.linkedin.com/in/%C3%A9milie-vernay-65350a222/" target="_blank" aria-label="LinkedIn"> <i class="fab fa-linkedin"></i> </a> 
-        <a href="mailto:emilie.vernay.pro@gmail.com" aria-label="Email"> <i class="fas fa-envelope"></i> </a> 
-      </div> </footer> <!-- N'oublie pas d'inclure Font Awesome dans ton <head> --> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  </body>
 </html>
